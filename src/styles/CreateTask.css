@@ -7,13 +7,41 @@
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
 }
 
+.create-task-header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  margin-bottom: 2.5rem;
+}
+
 .create-task-container h2 {
   color: #2c3e50;
-  margin-bottom: 2.5rem;
   text-align: center;
   font-size: 2.2rem;
   font-weight: 600;
   position: relative;
+  margin: 0;
+}
+
+.back-button.mobile-only {
+  display: none;
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  background: transparent;
+  border: none;
+  font-size: 1.5rem;
+  color: #3498db;
+  cursor: pointer;
+  padding: 0.5rem;
+}
+
+@media (max-width: 768px) {
+  .back-button.mobile-only {
+    display: block;
+  }
 }
 
 .create-task-container h2::after {
@@ -440,15 +468,8 @@
   box-shadow: 0 5px 15px rgba(52, 152, 219, 0.3);
 }
 
-/* Remove these AI-related styles */
-.ai-buttons,
-.ai-generate-btn,
-.ai-suggest-btn,
-.suggestions-content,
-.task-breakdown,
-.recommendations {
-  display: none;
-}
+/* AI-related styles */
+/* These styles were previously set to display: none, but we need them for the AI description generation feature */
 
 .description-container {
   display: flex;
@@ -459,6 +480,7 @@
 .ai-buttons {
   display: flex;
   gap: 1rem;
+  margin-top: 0.5rem;
 }
 
 .ai-generate-btn,
@@ -515,4 +537,157 @@
   margin-top: 1rem;
   padding-top: 1rem;
   border-top: 1px solid #eee;
+}
+
+/* Responsive styles */
+@media (max-width: 1200px) {
+  .create-task-container {
+    max-width: 90%;
+    padding: 2rem;
+  }
+}
+
+@media (max-width: 992px) {
+  .create-task-container {
+    max-width: 95%;
+    padding: 1.75rem;
+  }
+
+  .create-task-container h2 {
+    font-size: 2rem;
+    margin-bottom: 2rem;
+  }
+
+  .create-task-form {
+    gap: 1.75rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .create-task-container {
+    margin: 1.5rem auto;
+    padding: 1.5rem;
+  }
+
+  .create-task-container h2 {
+    font-size: 1.8rem;
+    margin-bottom: 1.75rem;
+  }
+
+  .create-task-form {
+    gap: 1.5rem;
+  }
+
+  .form-group {
+    gap: 0.6rem;
+  }
+
+  .form-control {
+    padding: 0.875rem;
+  }
+
+  .categories-container,
+  .team-members-container {
+    flex-wrap: wrap;
+    gap: 0.6rem;
+  }
+
+  .category-btn,
+  .team-member-btn {
+    padding: 0.6rem 1rem;
+    font-size: 0.9rem;
+  }
+
+  .file-upload-container {
+    padding: 1.5rem;
+  }
+
+  .form-actions {
+    flex-wrap: wrap;
+    gap: 0.75rem;
+  }
+
+  .form-actions button {
+    flex: 1;
+    min-width: 120px;
+    padding: 0.75rem 1.25rem;
+  }
+
+  .ai-buttons {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .ai-generate-btn,
+  .ai-suggest-btn {
+    width: 100%;
+  }
+}
+
+@media (max-width: 576px) {
+  .create-task-container {
+    margin: 1rem auto;
+    padding: 1.25rem;
+    border-radius: 10px;
+  }
+
+  .create-task-container h2 {
+    font-size: 1.6rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .create-task-form {
+    gap: 1.25rem;
+  }
+
+  .form-group label {
+    font-size: 1rem;
+  }
+
+  .form-control {
+    padding: 0.75rem;
+    font-size: 0.95rem;
+  }
+
+  .category-btn,
+  .team-member-btn {
+    padding: 0.5rem 0.875rem;
+    font-size: 0.85rem;
+    border-radius: 20px;
+  }
+
+  .team-member-btn .member-avatar {
+    width: 25px;
+    height: 25px;
+    font-size: 0.85rem;
+  }
+
+  .file-upload-container {
+    padding: 1.25rem;
+  }
+
+  .drop-zone-text {
+    font-size: 0.9rem;
+  }
+
+  .form-actions {
+    flex-direction: column;
+  }
+
+  .form-actions button {
+    width: 100%;
+  }
+
+  .comments-list {
+    max-height: 250px;
+  }
+
+  .comment-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .comment-actions {
+    flex-wrap: wrap;
+  }
 }

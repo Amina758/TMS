@@ -18,34 +18,29 @@ app.use((req, res, next) => {
   next();
 });
 
-// Mount AI routes with error catching
-app.use('/api/ai', async (req, res, next) => {
-  try {
-    console.log('AI route accessed:', req.path);
-    await next();
-  } catch (error) {
-    console.error('AI Route Error:', error);
-    res.status(500).json({ 
-      error: 'AI service error', 
-      details: error.message 
-    });
-  }
-}, aiRoutes);
-
 // Basic test route
 app.get('/test', (req, res) => {
   res.json({ message: 'Server is running' });
 });
 
-// Error handling middleware
-app.use((err, req, res, next) => {
-  console.error('Error:', err);
-  res.status(500).json({ error: err.message });
+// Mount AI routes
+app.use('/api/ai', aiRoutes);
+
+// Log all requests
+app.use((req, res, next) => {
+  console.log(`Request: ${req.method} ${req.path}`);
+  next();
 });
 
-// 404 handler
+// 404 handler - must be after all routes
 app.use((req, res) => {
   res.status(404).json({ error: `Cannot ${req.method} ${req.path}` });
+});
+
+// Error handling middleware - must be last
+app.use((err, req, res, next) => {
+  console.error('Server Error:', err);
+  res.status(500).json({ error: err.message || 'Internal Server Error' });
 });
 
 const PORT = 3001;

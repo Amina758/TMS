@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_BASE_URL = 'http://localhost:3001/api';
+const API_BASE_URL = 'http://localhost:5000/api';
 
 export const aiService = {
   async generateTaskDescription(title) {
@@ -12,37 +12,15 @@ export const aiService = {
           'Content-Type': 'application/json'
         }
       });
-      
+
       if (!response.data || !response.data.description) {
         throw new Error('Invalid response from AI service');
       }
-      
+
       return response.data.description;
     } catch (error) {
       console.error('AI Service Error:', error);
       throw new Error('Failed to generate description');
-    }
-  },
-
-  async generateTaskSuggestions(title, description) {
-    try {
-      const response = await axios.post(`${API_BASE_URL}/ai/generate-suggestions`, {
-        title,
-        description
-      }, {
-        headers: {
-          'Content-Type': 'application/json'
-        }
-      });
-      
-      if (!response.data) {
-        throw new Error('Invalid response from AI service');
-      }
-      
-      return response.data;
-    } catch (error) {
-      console.error('AI Service Error:', error);
-      throw new Error('Failed to generate suggestions');
     }
   }
 };

@@ -21,3 +21,25 @@
 .search-input::placeholder {
   color: #95a5a6;
 }
+
+/* Responsive styles */
+@media (max-width: 768px) {
+  .search-bar {
+    margin: 0.75rem 0 1.25rem;
+  }
+
+  .search-input {
+    padding: 0.875rem;
+  }
+}
+
+@media (max-width: 576px) {
+  .search-bar {
+    margin: 0.5rem 0 1rem;
+  }
+
+  .search-input {
+    padding: 0.75rem;
+    font-size: 0.95rem;
+  }
+}

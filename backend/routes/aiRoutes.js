@@ -1,8 +1,8 @@
 const express = require('express');
 const router = express.Router();
-const localAiService = require('../services/localAiService');
+const aiService = require('../services/aiService');
 
-// Basic test route
+// Test route to verify AI routes are working
 router.get('/test', (req, res) => {
   res.json({
     status: 'success',
@@ -11,7 +11,7 @@ router.get('/test', (req, res) => {
 });
 
 // Generate task description based on title
-router.post('/generate-description', (req, res) => {
+router.post('/generate-description', async (req, res) => {
   try {
     const { title } = req.body;
 
@@ -19,13 +19,8 @@ router.post('/generate-description', (req, res) => {
       return res.status(400).json({ error: 'Title is required' });
     }
 
-    // Generate description using local AI service
-    const description = localAiService.generateTaskDescription(title);
-
-    res.json({
-      description,
-      source: 'local-ai'
-    });
+    const description = await aiService.generateTaskDescription(title);
+    res.json({ description });
   } catch (error) {
     console.error('Error generating description:', error);
     res.status(500).json({ error: error.message });
