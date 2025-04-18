@@ -3,17 +3,21 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Dashboard from './components/Dashboard';
 import CreateTask from './components/CreateTask';
 import './styles/App.css';
+import { TaskProvider } from './context/TaskContext';
 
 function App() {
   return (
-    <Router>
-      <div className="App">
-        <Routes>
-          <Route path="/" element={<Dashboard />} />
-          <Route path="/create" element={<CreateTask />} />
-        </Routes>
-      </div>
-    </Router>
+    <TaskProvider>
+      <Router>
+        <div className="App">
+          <Routes>
+            <Route path="/" element={<Dashboard />} />
+            <Route path="/create" element={<CreateTask />} />
+            <Route path="/edit/:id" element={<CreateTask />} />
+          </Routes>
+        </div>
+      </Router>
+    </TaskProvider>
   );
 }
 

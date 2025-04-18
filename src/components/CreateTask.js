@@ -1,9 +1,16 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useTaskContext } from '../context/TaskContext';
+import { useNavigate, useParams } from 'react-router-dom';
 import '../styles/CreateTask.css';
+// Add to imports at the top
+import { aiService } from '../services/aiService';
 
 const CreateTask = () => {
+  const { addTask, deleteTask, editTask, tasks } = useTaskContext();
   const navigate = useNavigate();
+  const { id } = useParams();
+  
+  // Keep only one set of state declarations
   const [task, setTask] = useState({
     id: Date.now(),
     title: '',
@@ -16,15 +23,116 @@ const CreateTask = () => {
     attachments: [],
     assignedTo: [],
     teamMembers: ['John Doe', 'Jane Smith', 'Mike Johnson', 'Sarah Williams'],
-    comments: []  // Add comma here
+    comments: []
   });
+  
+  const [aiSuggestions, setAiSuggestions] = useState(null);
+  const [isLoadingAI, setIsLoadingAI] = useState(false);
   const [newTag, setNewTag] = useState('');
   const [newComment, setNewComment] = useState('');
+  const [dragOver, setDragOver] = useState(false);
+  const [fileError, setFileError] = useState('');
 
   const predefinedCategories = [
     'Work', 'Personal', 'Study', 'Health', 'Shopping', 'Home'
   ];
 
+  // Effects
+  useEffect(() => {
+    if (id) {
+      const taskToEdit = tasks.find(task => task.id === parseInt(id));
+      if (taskToEdit) {
+        setTask(taskToEdit);
+      }
+    }
+  }, [id, tasks]);
+
+  // AI-related handlers
+  const handleAISuggestions = async () => {
+    if (!task.title || !task.description) {
+      alert('Please enter title and description first');
+      return;
+    }
+
+    setIsLoadingAI(true);
+    try {
+      const suggestions = await aiService.generateTaskSuggestions(
+        task.title,
+        task.description
+      );
+      setAiSuggestions(suggestions);
+      
+      if (window.confirm('Would you like to apply these AI suggestions to your task?')) {
+        setTask(prev => ({
+          ...prev,
+          categories: suggestions.categories || prev.categories,
+          tags: [...new Set([...prev.tags, ...(suggestions.tags || [])])],
+          priority: suggestions.priority || prev.priority
+        }));
+      }
+    } catch (error) {
+      console.error('Failed to get AI suggestions:', error);
+      alert('Failed to get AI suggestions. Please try again.');
+    } finally {
+      setIsLoadingAI(false);
+    }
+  };
+
+  const handleGenerateDescription = async () => {
+    if (!task.title) {
+      alert('Please enter a task title first');
+      return;
+    }
+
+    setIsLoadingAI(true);
+    try {
+      const description = await aiService.generateTaskDescription(task.title);
+      if (!description) {
+        throw new Error('No description generated');
+      }
+      setTask(prev => ({
+        ...prev,
+        description
+      }));
+    } catch (error) {
+      console.error('Failed to generate description:', error);
+      alert(error.message || 'Failed to generate description. Please try again.');
+    } finally {
+      setIsLoadingAI(false);
+    }
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!task.title.trim() || !task.description.trim()) {
+      alert('Please fill in all required fields');
+      return;
+    }
+  
+    try {
+      if (id) {
+        await editTask(parseInt(id), task);
+        alert('Task updated successfully!');
+      } else {
+        await addTask(task);
+        alert('Task created successfully!');
+      }
+      navigate('/');
+    } catch (error) {
+      console.error('Failed to save task:', error);
+      alert('Failed to save task. Please try again.');
+    }
+  };
+
+  // Remove these duplicate declarations (around line 124-150):
+  // const [task, setTask] = useState({ ... });
+  // const [newTag, setNewTag] = useState('');
+  // const [newComment, setNewComment] = useState('');
+  // const [dragOver, setDragOver] = useState(false);
+  // const [fileError, setFileError] = useState('');
+  // const predefinedCategories = [ ... ];
+
+  // Continue with handleChange and other functions
   const handleChange = (e) => {
     const { name, value } = e.target;
     setTask(prev => ({
@@ -32,23 +140,7 @@ const CreateTask = () => {
       [name]: value
     }));
   };
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    if (!task.title.trim() || !task.description.trim()) {
-      alert('Please fill in all required fields');
-      return;
-    }
-
-    const savedTasks = JSON.parse(localStorage.getItem('tasks') || '[]');
-    const updatedTasks = [...savedTasks, task];
-    localStorage.setItem('tasks', JSON.stringify(updatedTasks));
-    
-    // Show success message
-    alert('Task created successfully!');
-    navigate('/');
-  };
-
+  
   const handleReset = () => {
     setTask({
       id: Date.now(),
@@ -69,7 +161,7 @@ const CreateTask = () => {
     setFileError('');
     setDragOver(false);
   };
-
+  
   const handleTagAdd = (e) => {
     e.preventDefault();
     if (newTag.trim() && !task.tags.includes(newTag.trim())) {
@@ -80,14 +172,14 @@ const CreateTask = () => {
       setNewTag('');
     }
   };
-
+  
   const removeTag = (tagToRemove) => {
     setTask(prev => ({
       ...prev,
       tags: prev.tags.filter(tag => tag !== tagToRemove)
     }));
   };
-
+  
   const toggleCategory = (category) => {
     setTask(prev => ({
       ...prev,
@@ -96,7 +188,7 @@ const CreateTask = () => {
         : [...prev.categories, category]
     }));
   };
-
+  
   // Remove the handleFileUpload function since we're using handleFiles
   
   const removeAttachment = (fileName) => {
@@ -105,22 +197,20 @@ const CreateTask = () => {
       attachments: prev.attachments.filter(file => file.name !== fileName)
     }));
   };
-
-  const [dragOver, setDragOver] = useState(false);
-  const [fileError, setFileError] = useState('');
+  
   const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB limit
-
+  
   const validateFile = (file) => {
     if (file.size > MAX_FILE_SIZE) {
       return `${file.name} is too large. Maximum size is 5MB.`;
     }
     return null;
   };
-
+  
   const handleFiles = (files) => {
     const fileList = Array.from(files);
     setFileError('');
-
+  
     const validFiles = fileList.filter(file => {
       const error = validateFile(file);
       if (error) {
@@ -129,7 +219,7 @@ const CreateTask = () => {
       }
       return true;
     });
-
+  
     const filePromises = validFiles.map(file => {
       return new Promise((resolve) => {
         const reader = new FileReader();
@@ -144,7 +234,7 @@ const CreateTask = () => {
         reader.readAsDataURL(file);
       });
     });
-
+  
     Promise.all(filePromises).then(fileData => {
       setTask(prev => ({
         ...prev,
@@ -152,23 +242,23 @@ const CreateTask = () => {
       }));
     });
   };
-
+  
   const handleDragOver = (e) => {
     e.preventDefault();
     setDragOver(true);
   };
-
+  
   const handleDragLeave = (e) => {
     e.preventDefault();
     setDragOver(false);
   };
-
+  
   const handleDrop = (e) => {
     e.preventDefault();
     setDragOver(false);
     handleFiles(e.dataTransfer.files);
   };
-
+  
   const handleAddComment = (e) => {
     e.preventDefault();
     if (newComment.trim()) {
@@ -184,14 +274,24 @@ const CreateTask = () => {
       setNewComment('');
     }
   };
-
+  const handleEditComment = (commentId, newText) => {
+    setTask(prev => ({
+      ...prev,
+      comments: prev.comments.map(comment => 
+        comment.id === commentId 
+          ? { ...comment, text: newText }
+          : comment
+      )
+    }));
+  };
+  
   const removeComment = (commentId) => {
     setTask(prev => ({
       ...prev,
       comments: prev.comments.filter(comment => comment.id !== commentId)
     }));
   };
-
+  
   const toggleTeamMember = (member) => {
     setTask(prev => ({
       ...prev,
@@ -200,7 +300,18 @@ const CreateTask = () => {
         : [...prev.assignedTo, member]
     }));
   };
-
+  
+  const handleDelete = async () => {
+    try {
+      await deleteTask(task.id);  // Use deleteTask directly instead of removeTask
+      alert('Task deleted successfully!');
+      navigate('/');
+    } catch (error) {
+      console.error('Failed to delete task:', error);
+      alert('Failed to delete task. Please try again.');
+    }
+  };
+  
   return (
     <div className="create-task-container">
       <h2>Create New Task</h2>
@@ -217,20 +328,65 @@ const CreateTask = () => {
             placeholder="Enter task title"
           />
         </div>
-
+  
         <div className="form-group">
           <label>Description</label>
-          <textarea
-            name="description"
-            value={task.description}
-            onChange={handleChange}
-            required
-            className="form-control"
-            placeholder="Enter task description"
-            rows="4"
-          />
+          <div className="description-container">
+            <textarea
+              name="description"
+              value={task.description}
+              onChange={handleChange}
+              required
+              className="form-control"
+              placeholder="Enter task description"
+              rows="4"
+            />
+            <div className="ai-buttons">
+              <button
+                type="button"
+                onClick={handleGenerateDescription}
+                className="ai-generate-btn"
+                disabled={isLoadingAI || !task.title}
+              >
+                {isLoadingAI ? 'Generating...' : 'Generate Description'}
+              </button>
+              <button
+                type="button"
+                onClick={handleAISuggestions}
+                className="ai-suggest-btn"
+                disabled={isLoadingAI || !task.title || !task.description}
+              >
+                {isLoadingAI ? 'Analyzing...' : 'Get AI Suggestions'}
+              </button>
+            </div>
+          </div>
+          {aiSuggestions && (
+            <div className="ai-suggestions">
+              <h4>AI Suggestions</h4>
+              <div className="suggestions-content">
+                <p><strong>Categories:</strong> {aiSuggestions.categories?.join(', ')}</p>
+                <p><strong>Tags:</strong> {aiSuggestions.tags?.join(', ')}</p>
+                <p><strong>Priority:</strong> {aiSuggestions.priority}</p>
+                <p><strong>Estimated Time:</strong> {aiSuggestions.estimatedTime}</p>
+                <div className="task-breakdown">
+                  <strong>Task Breakdown:</strong>
+                  <ul>
+                    {aiSuggestions.taskBreakdown?.map((step, index) => (
+                      <li key={index}>{step}</li>
+                    ))}
+                  </ul>
+                </div>
+                {aiSuggestions.recommendations && (
+                  <div className="recommendations">
+                    <strong>Additional Recommendations:</strong>
+                    <p>{aiSuggestions.recommendations}</p>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
         </div>
-
+  
         <div className="form-group">
           <label>Due Date</label>
           <input
@@ -242,7 +398,7 @@ const CreateTask = () => {
             className="form-control"
           />
         </div>
-
+  
         <div className="form-group">
           <label>Priority</label>
           <select
@@ -256,7 +412,7 @@ const CreateTask = () => {
             <option value="high">High</option>
           </select>
         </div>
-
+  
         <div className="form-group">
           <label>Categories</label>
           <div className="categories-container">
@@ -272,7 +428,7 @@ const CreateTask = () => {
             ))}
           </div>
         </div>
-
+  
         <div className="form-group">
           <label>Tags</label>
           <div className="tags-input-container">
@@ -300,7 +456,7 @@ const CreateTask = () => {
             </div>
           </div>
         </div>
-
+  
         <div className="form-group">
           <label>Attachments</label>
           <div 
@@ -342,7 +498,7 @@ const CreateTask = () => {
             ))}
           </div>
         </div>
-
+  
         <div className="form-group">
           <label>Assign Team Members</label>
           <div className="team-members-container">
@@ -359,7 +515,7 @@ const CreateTask = () => {
             ))}
           </div>
         </div>
-
+  
         <div className="form-group">
           <label>Comments</label>
           <div className="comments-container">
@@ -373,13 +529,27 @@ const CreateTask = () => {
                     </span>
                   </div>
                   <p className="comment-text">{comment.text}</p>
-                  <button
-                    type="button"
-                    onClick={() => removeComment(comment.id)}
-                    className="comment-remove"
-                  >
-                    Delete
-                  </button>
+                  <div className="comment-actions">
+                    <button
+                      type="button"
+                      onClick={() => removeComment(comment.id)}
+                      className="comment-remove"
+                    >
+                      Delete
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const newText = prompt('Edit comment:', comment.text);
+                        if (newText && newText.trim()) {
+                          handleEditComment(comment.id, newText.trim());
+                        }
+                      }}
+                      className="comment-edit"
+                    >
+                      Edit
+                    </button>
+                  </div>
                 </div>
               ))}
             </div>
@@ -401,7 +571,7 @@ const CreateTask = () => {
             </div>
           </div>
         </div>
-
+  
         <div className="form-actions">
           <button type="button" onClick={handleReset} className="btn-reset">
             Reset
@@ -410,12 +580,17 @@ const CreateTask = () => {
             Cancel
           </button>
           <button type="submit" className="btn-submit">
-            Create Task
+            {id ? 'Update Task' : 'Create Task'}
           </button>
+          {id && (
+            <button type="button" onClick={handleDelete} className="btn-delete">
+              Delete
+            </button>
+          )}
         </div>
       </form>
     </div>
   );
-};
+} // End of CreateTask component
 
 export default CreateTask;

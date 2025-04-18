@@ -1,21 +1,32 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import SearchBar from './SearchBar';
 import '../styles/TaskList.css';
+import { useTaskContext } from '../context/TaskContext';
 
 const TaskList = () => {
   const navigate = useNavigate();
-  const [tasks, setTasks] = useState([]);
+  const { tasks, loading, error, deleteTask } = useTaskContext();
   const [searchTerm, setSearchTerm] = useState('');
   const [filters, setFilters] = useState({
     status: 'all',
     priority: 'all'
   });
 
-  useEffect(() => {
-    const savedTasks = JSON.parse(localStorage.getItem('tasks') || '[]');
-    setTasks(savedTasks);
-  }, []);
+  if (loading) return (
+    <div className="loading-state">
+      <p>Loading tasks...</p>
+    </div>
+  );
+  
+  if (error) return (
+    <div className="error-state">
+      <p>{error}</p>
+      <button onClick={() => window.location.reload()} className="retry-btn">
+        Retry
+      </button>
+    </div>
+  );
 
   const handleFilterChange = (type, value) => {
     setFilters(prev => ({
@@ -33,11 +44,13 @@ const TaskList = () => {
     return matchesSearch && matchesStatus && matchesPriority;
   });
 
-  const handleDelete = (taskId) => {
+  const handleDelete = async (taskId) => {
     if (window.confirm('Are you sure you want to delete this task?')) {
-      const updatedTasks = tasks.filter(task => task.id !== taskId);
-      setTasks(updatedTasks);
-      localStorage.setItem('tasks', JSON.stringify(updatedTasks));
+      try {
+        await deleteTask(taskId);
+      } catch (error) {
+        console.error('Failed to delete task:', error);
+      }
     }
   };
 

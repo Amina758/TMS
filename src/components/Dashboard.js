@@ -1,9 +1,21 @@
-import React from 'react';
+import React, { useEffect } from 'react';
+import { testConnection } from '../utils/api';
 import { useNavigate } from 'react-router-dom';
 import TaskList from './TaskList';
 import '../styles/Dashboard.css';
 
 const Dashboard = () => {
+  useEffect(() => {
+    const testBackend = async () => {
+      try {
+        await testConnection();
+        console.log('Backend connection successful');
+      } catch (error) {
+        console.error('Backend connection failed:', error);
+      }
+    };
+    testBackend();
+  }, []);
   const navigate = useNavigate();
 
   return (

@@ -11,7 +11,6 @@ const SearchBar = ({ searchTerm, onSearchChange }) => {
         onChange={(e) => onSearchChange(e.target.value)}
         className="search-input"
       />
-      <i className="search-icon">🔍</i>
     </div>
   );
 };
