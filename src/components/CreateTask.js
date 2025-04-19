@@ -57,17 +57,29 @@ const CreateTask = () => {
 
     setIsLoadingAI(true);
     try {
+      console.log('Requesting description for:', task.title);
       const description = await aiService.generateTaskDescription(task.title);
+
       if (!description) {
+        console.error('Empty description returned');
         throw new Error('No description generated');
       }
+
+      console.log('Description received:', description);
       setTask(prev => ({
         ...prev,
         description
       }));
     } catch (error) {
       console.error('Failed to generate description:', error);
-      alert(error.message || 'Failed to generate description. Please try again.');
+
+      // Don't show alert, just use fallback
+      const fallbackDescription = `This task for "${task.title}" requires planning, organization, and attention to detail. Break it down into manageable steps and track progress to ensure successful completion.`;
+
+      setTask(prev => ({
+        ...prev,
+        description: fallbackDescription
+      }));
     } finally {
       setIsLoadingAI(false);
     }
